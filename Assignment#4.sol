@@ -48,7 +48,7 @@ interface ISharpWallet {
     //////////////////////////////////////////////////////////////*/
 
     /// @notice Submit a transaction proposal.
-    function submitTransaction(
+    function submitTransactionProposal(
         address to,
         uint256 value,
         bytes calldata data
