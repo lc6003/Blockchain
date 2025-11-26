@@ -5,29 +5,29 @@ contract MultiSigWallet {
 
     event TransactionSubmitted(txId, proposer, to, value, data); // Emitted when an owner submits a new transaction
     event TransactionApproved(txId, owner); // Emitted when an owner approves a transaction
-    event ApprovalRevoked (txId, owner); // Emitted when an owner removes their approval
+    event ApprovalRevoked(txId, owner); // Emitted when an owner removes their approval
     event TransactionExecuted(txId, executor); // Emitted when a transaction is fully approved and executed
     event OwnerAdded(newOwner); // Emitted when a new wallet owner is added
     event OwnerRemoved(oldOwner); // Emitted when an existing owner is removed
     event RequirementChanged(newRequirement); // Emitted when the required number of approvals is updated
 
     //Allows any owner to propose a new transaction
-    function submitWithdrawal(to, value, data) public{
+    function submitWithdrawal(to, value, data) public {
 
     }
 
     //Owner approves a pending transaction
-    function approveTransaction(txId) public{
+    function approveTransaction(txId) public {
 
     }
 
     //Owner can revoke their approval before execution
-    function revokeApproval(txId) public{
+    function revokeApproval(txId) public {
 
     }
 
     //Executes a transaction once it reaches required approvals
-    function executeTransaction(txId) public{
+    function executeTransaction(txId) public {
 
     } 
     
