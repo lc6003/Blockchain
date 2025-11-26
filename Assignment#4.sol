@@ -2,33 +2,34 @@ pragma solidity ^0.8.0;
 
 contract MultiSigWallet {
 
-    address[] public owners; //list of owners
-    mapping(address => bool) public isOwner; //allow for quick lookup to check if they are owner
-    uint public numConfirmationsRequired; 
+    event TransactionSubmitted(txId, proposer, to, value, data); // Emitted when an owner submits a new transaction
+    event TransactionApproved(txId, owner); // Emitted when an owner approves a transaction
+    event ApprovalRevoked (txId, owner); // Emitted when an owner removes their approval
+    event TransactionExecuted(txId, executor); // Emitted when a transaction is fully approved and executed
+    event OwnerAdded(newOwner); // Emitted when a new wallet owner is added
+    event OwnerRemoved(oldOwner); // Emitted when an existing owner is removed
+    event RequirementChanged(newRequirement); // Emitted when the required number of approvals is updated
 
-    struct WithdrawalRequest {
-        address recipient;
-        uint value;
-        bool executed;
-        uint numConfirmations;
+    //Allows any owner to propose a new transaction
+    function submitWithdrawal(to, value, data) public{
+
     }
 
-    // holds the list of all withdrawal requests
-    WithdrawalRequest[] public withdrawalRequests;
+    //Owner approves a pending transaction
+    function approveTransaction(txId) public{
 
-    // so we know in the specific transaction, 
-    // which owner has confirmed the transaction
-    mapping(uint => mapping(address => bool)) public isConfirmed;
-
-    constructor(address[] memory _owners, uint _numConfirmationsRequired) {
-        require(_owners.length > 0, "Owners required");
-        require(_numConfirmationsRequired > 0 && _numConfirmationsRequired <= _owners.length, "Invalid number of required confirmations");
-
-        for (uint i = 0; i < _owners.length; i++) {
-            address owner = _owners[i];
-            require(owner != address(0))
-        }
     }
+
+    //Owner can revoke their approval before execution
+    function revokeApproval(txId) public{
+
+    }
+
+    //Executes a transaction once it reaches required approvals
+    function executeTransaction(txId) public{
+
+    } 
+    
 }
 
 interface ISharpWallet {
