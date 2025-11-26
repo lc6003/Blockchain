@@ -9,5 +9,6 @@ This is the repo for the Blockchain Project
 - **Baolin Chang** - Email: baolin.chang71@myhunter.cuny.edu
 
 ## Project Purpose
-The purpose of Sharp Wallet is to make it where the wallet’s currency is co-owned meaning no single person has absolute power over the currency. An example of this in the real world is a escrow service on the internet where you are trying to buy something expensive from a stranger online and this money is then put into a multi-sig wallet controlled by 3 people, you, seller, and a trusted third party. All parties must then confirm the transaction to prevent scam. But you need a middle man in the real world example, a smart contract enforces the rules automatically so no middle man is needed.
+The purpose of Sharp Wallet is to make it where the wallet’s currency is co-owned meaning no single person has absolute power over the currency. An example of this in the real world is a escrow service on the internet where you are trying to buy something expensive from a stranger online and this money is then put into a multi-sig wallet controlled by 3 people, you, seller, and a trusted third party. All parties must then confirm the transaction to prevent scam. Traditionally you need a middleman to facilitate this process but smart contracts enforces the rules automatically through code. Smart Wallet can be used in situations or business requiring multiple people to make big decisions like a business treasury requiring multiple executives to authorize spending or student managing club funds that needs the approval of many members.
+
 
