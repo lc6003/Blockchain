@@ -12,7 +12,7 @@ contract MultiSigWallet {
     event RequirementChanged(newRequirement); // Emitted when the required number of approvals is updated
 
     //Allows any owner to propose a new transaction
-    function submitWithdrawal(to, value, data) public {
+    function submitTransaction(to, value, data) public {
 
     }
 
