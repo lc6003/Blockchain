@@ -8,9 +8,9 @@ contract MultiSigWallet {
 
     struct WithdrawalRequest {
         address recipient;
-        unit value;
+        uint value;
         bool executed;
-        unit numConfirmations;
+        uint numConfirmations;
     }
 
     // holds the list of all withdrawal requests
@@ -18,7 +18,7 @@ contract MultiSigWallet {
 
     // so we know in the specific transaction, 
     // which owner has confirmed the transaction
-    mapping(unit => mapping(address => bool)) public isConfirmed;
+    mapping(uint => mapping(address => bool)) public isConfirmed;
 
     constructor(address[] memory _owners, uint _numConfirmationsRequired) {
         require(_owners.length > 0, "Owners required");
