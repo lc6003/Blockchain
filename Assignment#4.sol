@@ -62,6 +62,54 @@ interface ISharpWallet {
 
     /// @notice Execute a fully-approved transaction.
     function executeTransaction(uint256 txId) external;
+
+    /*//////////////////////////////////////////////////////////////
+                         READ / UTILITY FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    /// @notice Returns whether an owner has approved a transaction.
+    function isApproved(uint256 txId, address owner)
+        external
+        view
+        returns (bool);
+
+    /// @notice Get number of approvals for a transaction.
+    function approvalCount(uint256 txId)
+        external
+        view
+        returns (uint256);
+
+    /// @notice Return details of a transaction.
+    function getTransaction(uint256 txId)
+        external
+        view
+        returns (
+            address to,
+            uint256 value,
+            bool executed,
+            uint256 numConfirmations,
+            bytes memory data
+        );
+
+    /// @notice Returns list of all owners.
+    function getOwners() external view returns (address[] memory);
+
+    /// @notice Returns the number of required approvals.
+    function requiredApprovals() external view returns (uint256);
+
+
+    /*//////////////////////////////////////////////////////////////
+                         OWNER MANAGEMENT FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    /// @notice Add a new owner to the wallet.
+    function addOwner(address newOwner) external;
+
+    /// @notice Remove an existing owner.
+    function removeOwner(address owner) external;
+
+    /// @notice Update the number of required confirmations.
+    function updateRequirement(uint256 newRequirement) external;
 }
 
 
