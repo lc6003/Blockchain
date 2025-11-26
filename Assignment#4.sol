@@ -1,5 +1,6 @@
 pragma solidity ^0.8.0;
 
+
 contract MultiSigWallet {
 
     event TransactionSubmitted(txId, proposer, to, value, data); // Emitted when an owner submits a new transaction
@@ -31,6 +32,7 @@ contract MultiSigWallet {
     } 
     
 }
+
 
 interface ISharpWallet {
     /*//////////////////////////////////////////////////////////////
