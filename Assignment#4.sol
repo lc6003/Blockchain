@@ -154,15 +154,36 @@ contract MultiSigWallet is ISharpWallet {
         requiredConfirmations = _requiredApprovals;
     }
 
+    /*//////////////////////////////////////////////////////////////
+                               EVENTS
+    //////////////////////////////////////////////////////////////*/
 
+    event TransactionSubmitted(
+        uint256 indexed txId,
+        address indexed proposer,
+        address to,
+        uint256 value,
+        bytes data
+    );
 
-    event TransactionSubmitted(txId, proposer, to, value, data); // Emitted when an owner submits a new transaction
-    event TransactionApproved(txId, owner); // Emitted when an owner approves a transaction
-    event ApprovalRevoked(txId, owner); // Emitted when an owner removes their approval
-    event TransactionExecuted(txId, executor); // Emitted when a transaction is fully approved and executed
-    event OwnerAdded(newOwner); // Emitted when a new wallet owner is added
-    event OwnerRemoved(oldOwner); // Emitted when an existing owner is removed
-    event RequirementChanged(newRequirement); // Emitted when the required number of approvals is updated
+    event TransactionApproved(
+        uint256 indexed txId,
+        address indexed owner
+    );
+
+    event ApprovalRevoked(
+        uint256 indexed txId,
+        address indexed owner
+    );
+
+    event TransactionExecuted(
+        uint256 indexed txId,
+        address indexed executor
+    );
+
+    event OwnerAdded(address indexed newOwner);
+    event OwnerRemoved(address indexed oldOwner);
+    event RequirementChanged(uint256 newRequirement);
 
     //Allows any owner to propose a new transaction
     function newTransaction(to, value, data) public {
