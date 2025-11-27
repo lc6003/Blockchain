@@ -128,6 +128,16 @@ contract MultiSigWallet is ISharpWallet {
     }
 
     /*//////////////////////////////////////////////////////////////
+                               STATE VARIABLES
+    //////////////////////////////////////////////////////////////*/
+
+    address[] public owners;
+    mapping(address => bool) public isOwner;
+    uint256 public requiredConfirmations;
+    Transaction[] public transactions;
+    mapping(uint256 => mapping(address => bool)) public approved;
+
+    /*//////////////////////////////////////////////////////////////
                                CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
 
