@@ -134,7 +134,19 @@ interface ISharpWallet {
 }
 
 
-contract MultiSigWallet {
+contract MultiSigWallet is ISharpWallet {
+
+    /*//////////////////////////////////////////////////////////////
+                               TYPE DECLARATIONS
+    //////////////////////////////////////////////////////////////*/
+
+    struct Transaction {
+        address to;
+        uint256 value;
+        bool executed;
+        uint256 numConfirmations;
+        bytes data;
+    }
 
     event TransactionSubmitted(txId, proposer, to, value, data); // Emitted when an owner submits a new transaction
     event TransactionApproved(txId, owner); // Emitted when an owner approves a transaction
