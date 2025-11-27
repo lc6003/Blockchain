@@ -69,7 +69,7 @@ interface ISharpWallet {
     //////////////////////////////////////////////////////////////*/
 
     /// @notice Submit a transaction proposal.
-    function newProposal(
+    function newTransaction(
         address to,
         uint256 value,
         bytes calldata data
@@ -145,7 +145,7 @@ contract MultiSigWallet {
     event RequirementChanged(newRequirement); // Emitted when the required number of approvals is updated
 
     //Allows any owner to propose a new transaction
-    function submitTransaction(to, value, data) public {
+    function newTransaction(to, value, data) public {
 
     }
 
