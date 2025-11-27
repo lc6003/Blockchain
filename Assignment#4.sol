@@ -1,27 +1,6 @@
 pragma solidity ^0.8.0;
 
 
-constructor(address[] memory _owners, uint256 _requiredApprovals) {
-    require(_owners.length > 0, "Owners required");
-    require(
-        _requiredApprovals > 0 && _requiredApprovals <= _owners.length,
-        "Invalid approval requirement"
-    );
-
-    for (uint256 i = 0; i < _owners.length; i++) {
-        address owner = _owners[i];
-
-        require(owner != address(0), "Invalid owner");
-        require(!isOwner[owner], "Owner not unique");
-
-        isOwner[owner] = true;
-        owners.push(owner);
-    }
-
-    requiredConfirmations = _requiredApprovals;
-}
-
-
 interface ISharpWallet {
     /*//////////////////////////////////////////////////////////////
                                EVENTS
@@ -147,6 +126,35 @@ contract MultiSigWallet is ISharpWallet {
         uint256 numConfirmations;
         bytes data;
     }
+
+    /*//////////////////////////////////////////////////////////////
+                               CONSTRUCTOR
+    //////////////////////////////////////////////////////////////*/
+
+    /// @notice Initialize owners and required number of approvals
+    /// @param _owners List of wallet owner addresses
+    /// @param _requiredApprovals Number of approvals required to execute transaction
+    constructor(address[] memory _owners, uint256 _requiredApprovals) {
+        require(_owners.length > 0, "Owners required");
+        require(
+            _requiredApprovals > 0 && _requiredApprovals <= _owners.length,
+            "Invalid approval requirement"
+        );
+    
+        for (uint256 i = 0; i < _owners.length; i++) {
+            address owner = _owners[i];
+    
+            require(owner != address(0), "Invalid owner");
+            require(!isOwner[owner], "Owner not unique");
+    
+            isOwner[owner] = true;
+            owners.push(owner);
+        }
+    
+        requiredConfirmations = _requiredApprovals;
+    }
+
+
 
     event TransactionSubmitted(txId, proposer, to, value, data); // Emitted when an owner submits a new transaction
     event TransactionApproved(txId, owner); // Emitted when an owner approves a transaction
