@@ -185,26 +185,82 @@ contract MultiSigWallet is ISharpWallet {
     event OwnerRemoved(address indexed oldOwner);
     event RequirementChanged(uint256 newRequirement);
 
-    //Allows any owner to propose a new transaction
-    function newTransaction(to, value, data) public {
+    /*//////////////////////////////////////////////////////////////
+                               FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    function newTransaction(address to, uint256 value, bytes calldata data)
+        external
+        override
+        returns (uint256 txId)
+    {
 
     }
 
-    //Owner approves a pending transaction
-    function approveTransaction(txId) public {
-
+    function approveTransaction(uint256 txId) external override {
+        
     }
 
-    //Owner can revoke their approval before execution
-    function revokeApproval(txId) public {
-
+    function revokeApproval(uint256 txId) external override {
+        
     }
 
-    //Executes a transaction once it reaches required approvals
-    function executeTransaction(txId) public {
+    function executeTransaction(uint256 txId) external override {
+        
+    }
 
-    } 
-    
+    function isApproved(uint256 txId, address owner)
+        external
+        view
+        override
+        returns (bool)
+    {
+        
+    }
+
+    function approvalCount(uint256 txId)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        
+    }
+
+    function getTransaction(uint256 txId)
+        external
+        view
+        override
+        returns (
+            address to,
+            uint256 value,
+            bool executed,
+            uint256 numConfirmations,
+            bytes memory data
+        )
+    {
+        
+    }
+
+    function getOwners() external view override returns (address[] memory) {
+        return owners;
+    }
+
+    function requiredApprovals() external view override returns (uint256) {
+        return requiredConfirmations;
+    }
+
+    function addOwner(address newOwner) external override {
+        
+    }
+
+    function removeOwner(address owner) external override {
+        
+    }
+
+    function updateRequirement(uint256 newRequirement) external override {
+        
+    }
 }
 
 
