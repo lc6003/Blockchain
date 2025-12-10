@@ -217,6 +217,7 @@ contract SharpWallet is ISharpWallet {
         bytes calldata data
     ) external override onlyOwner returns (uint256 txId) {
         require(to != address(0), "Invalid target address");
+        require(data.length <= 4096, "Calldata too large");
 
         txId = transactions.length;
 
