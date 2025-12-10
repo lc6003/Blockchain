@@ -1,7 +1,7 @@
 const hre = require("hardhat");
 
 async function main() {
-  console.log("Deploying MultiSigWallet...");
+  console.log("Deploying SharpWallet...");
 
   // Get signers
   const [deployer, owner2, owner3] = await ethers.getSigners();
@@ -24,16 +24,16 @@ async function main() {
   console.log(`\nRequired Approvals: ${requiredApprovals}`);
 
   // Deploy contract
-  const MultiSigWallet = await hre.ethers.getContractFactory("MultiSigWallet");
-  const multiSigWallet = await MultiSigWallet.deploy(owners, requiredApprovals);
+  const SharpWallet = await hre.ethers.getContractFactory("SharpWallet");
+  const sharpWallet = await SharpWallet.deploy(owners, requiredApprovals);
 
-  await multiSigWallet.deployed();
+  await sharpWallet.deployed();
 
-  console.log("\n✅ MultiSigWallet deployed to:", multiSigWallet.address);
+  console.log("\n✅ SharpWallet deployed to:", sharpWallet.address);
 
   // Verify deployment
-  const contractOwners = await multiSigWallet.getOwners();
-  const contractRequirement = await multiSigWallet.requiredApprovals();
+  const contractOwners = await sharpWallet.getOwners();
+  const contractRequirement = await sharpWallet.requiredApprovals();
 
   console.log("\n📋 Deployment Verification:");
   console.log("  Owners count:", contractOwners.length);
@@ -43,18 +43,18 @@ async function main() {
   const fundAmount = ethers.utils.parseEther("1");
   console.log("\n💰 Funding wallet with 1 ETH...");
   const tx = await deployer.sendTransaction({
-    to: multiSigWallet.address,
+    to: sharpWallet.address,
     value: fundAmount,
   });
   await tx.wait();
 
-  const balance = await ethers.provider.getBalance(multiSigWallet.address);
+  const balance = await ethers.provider.getBalance(sharpWallet.address);
   console.log("  Wallet balance:", ethers.utils.formatEther(balance), "ETH");
 
   // Save deployment info
   const deploymentInfo = {
     network: hre.network.name,
-    contractAddress: multiSigWallet.address,
+    contractAddress: sharpWallet.address,
     owners: owners,
     requiredApprovals: requiredApprovals,
     deploymentBlock: tx.blockNumber,
@@ -67,12 +67,12 @@ async function main() {
   // Wait for block confirmations before verification
   if (hre.network.name !== "hardhat" && hre.network.name !== "localhost") {
     console.log("\n⏳ Waiting for block confirmations...");
-    await multiSigWallet.deployTransaction.wait(6);
+    await sharpWallet.deployTransaction.wait(6);
 
     console.log("\n🔍 Verifying contract on Etherscan...");
     try {
       await hre.run("verify:verify", {
-        address: multiSigWallet.address,
+        address: sharpWallet.address,
         constructorArguments: [owners, requiredApprovals],
       });
       console.log("✅ Contract verified!");
