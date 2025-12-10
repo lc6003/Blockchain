@@ -121,6 +121,12 @@ interface ISharpWallet {
 
 
 contract SharpWallet is ISharpWallet {
+    
+    error NotOwner();
+    error TxDoesNotExist();
+    error TxAlreadyExecuted();
+    error TxAlreadyApproved();
+
     /*//////////////////////////////////////////////////////////////
                                TYPE DECLARATIONS
     //////////////////////////////////////////////////////////////*/
@@ -148,22 +154,22 @@ contract SharpWallet is ISharpWallet {
     //////////////////////////////////////////////////////////////*/
 
     modifier onlyOwner() {
-        require(isOwner[msg.sender], "Not owner");
+        if (!isOwner[msg.sender]) revert NotOwner();
         _;
     }
 
     modifier txExists(uint256 txId) {
-        require(txId < transactions.length, "Transaction does not exist");
+        if (txId >= transactions.length) revert TxDoesNotExist();
         _;
     }
 
     modifier notExecuted(uint256 txId) {
-        require(!transactions[txId].executed, "Transaction already executed");
+        if (transactions[txId].executed) revert TxAlreadyExecuted();
         _;
     }
 
     modifier notApproved(uint256 txId) {
-        require(!approved[txId][msg.sender], "Transaction already approved");
+        if (approved[txId][msg.sender]) revert TxAlreadyApproved();
         _;
     }
 
@@ -216,6 +222,8 @@ contract SharpWallet is ISharpWallet {
         uint256 value,
         bytes calldata data
     ) external override onlyOwner returns (uint256 txId) {
+        require(to != address(0), "Invalid target address");
+
         txId = transactions.length;
 
         transactions.push(
