@@ -105,18 +105,6 @@ interface ISharpWallet {
     /// @notice Returns the total number of transactions.
     function getTransactionCount() external view returns (uint256);
 
-    /*//////////////////////////////////////////////////////////////
-                         OWNER MANAGEMENT FUNCTIONS
-    //////////////////////////////////////////////////////////////*/
-
-    /// @notice Add a new owner to the wallet.
-    function addOwner(address newOwner) external;
-
-    /// @notice Remove an existing owner.
-    function removeOwner(address owner) external;
-
-    /// @notice Update the number of required confirmations.
-    function updateRequirement(uint256 newRequirement) external;
 }
 
 
@@ -386,63 +374,4 @@ contract SharpWallet is ISharpWallet {
         return transactions.length;
     }
 
-    /*//////////////////////////////////////////////////////////////
-                         OWNER MANAGEMENT FUNCTIONS
-    //////////////////////////////////////////////////////////////*/
-
-    /// @notice Add a new owner (must be called via multi-sig transaction)
-    /// @param newOwner Address of new owner
-    function addOwner(address newOwner) external override {
-        require(msg.sender == address(this), "Only wallet can add owner");
-        require(newOwner != address(0), "Invalid owner address");
-        require(!isOwner[newOwner], "Owner already exists");
-
-        isOwner[newOwner] = true;
-        owners.push(newOwner);
-
-        emit OwnerAdded(newOwner);
-    }
-
-    /// @notice Remove an existing owner (must be called via multi-sig transaction)
-    /// @param owner Address of owner to remove
-    function removeOwner(address owner) external override {
-        require(msg.sender == address(this), "Only wallet can remove owner");
-        require(isOwner[owner], "Not an owner");
-        require(owners.length > 1, "Cannot remove last owner");
-        require(
-            owners.length - 1 >= requiredConfirmations,
-            "Would break requirement"
-        );
-
-        isOwner[owner] = false;
-
-        // Remove from owners array
-        for (uint256 i = 0; i < owners.length; i++) {
-            if (owners[i] == owner) {
-                owners[i] = owners[owners.length - 1];
-                owners.pop();
-                break;
-            }
-        }
-
-        emit OwnerRemoved(owner);
-    }
-
-    /// @notice Update required confirmations (must be called via multi-sig transaction)
-    /// @param newRequirement New number of required confirmations
-    function updateRequirement(uint256 newRequirement) external override {
-        require(
-            msg.sender == address(this),
-            "Only wallet can update requirement"
-        );
-        require(newRequirement > 0, "Requirement must be positive");
-        require(
-            newRequirement <= owners.length,
-            "Requirement exceeds owner count"
-        );
-
-        requiredConfirmations = newRequirement;
-
-        emit RequirementChanged(newRequirement);
-    }
-}
+   
