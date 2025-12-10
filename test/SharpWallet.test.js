@@ -13,12 +13,12 @@ describe("SharpWallet", function () {
 
         const SharpWallet = await ethers.getContractFactory("SharpWallet");
         sharpWallet = await SharpWallet.deploy(owners, requiredApprovals);
-        await sharpWallet.waitForDeployment(); // Updated for Ethers v6
+        await sharpWallet.deployed(); // Ethers v5 syntax
 
         // Fund the wallet
         await owner1.sendTransaction({
-            to: await sharpWallet.getAddress(),
-            value: ethers.parseEther("10") // Updated for Ethers v6
+            to: sharpWallet.address, // Ethers v5 syntax
+            value: ethers.utils.parseEther("10") // Ethers v5 syntax
         });
     });
 
@@ -33,7 +33,6 @@ describe("SharpWallet", function () {
         });
 
         it("Should mark addresses as owners", async function () {
-            // Note: Since isOwner is public mapping, we access it like a function
             expect(await sharpWallet.isOwner(owner1.address)).to.be.true;
             expect(await sharpWallet.isOwner(owner2.address)).to.be.true;
             expect(await sharpWallet.isOwner(owner3.address)).to.be.true;
@@ -66,9 +65,8 @@ describe("SharpWallet", function () {
 
         it("Should reject zero address as owner", async function () {
             const SharpWallet = await ethers.getContractFactory("SharpWallet");
-            // FIXED: Updated error message to match contract
             await expect(
-                SharpWallet.deploy([ethers.ZeroAddress], 1)
+                SharpWallet.deploy([ethers.constants.AddressZero], 1)
             ).to.be.revertedWith("Invalid owner address");
         });
     });
@@ -76,7 +74,7 @@ describe("SharpWallet", function () {
     describe("Transaction Submission", function () {
         it("Should allow owner to submit transaction", async function () {
             const to = nonOwner.address;
-            const value = ethers.parseEther("1");
+            const value = ethers.utils.parseEther("1");
             const data = "0x";
 
             await expect(
@@ -87,11 +85,10 @@ describe("SharpWallet", function () {
         });
 
         it("Should reject non-owner submission", async function () {
-            // FIXED: Using general reverted check to handle potential custom errors
             await expect(
                 sharpWallet.connect(nonOwner).newTransaction(
                     nonOwner.address,
-                    ethers.parseEther("1"),
+                    ethers.utils.parseEther("1"),
                     "0x"
                 )
             ).to.be.reverted;
@@ -110,7 +107,7 @@ describe("SharpWallet", function () {
         beforeEach(async function () {
             await sharpWallet.connect(owner1).newTransaction(
                 nonOwner.address,
-                ethers.parseEther("1"),
+                ethers.utils.parseEther("1"),
                 "0x"
             );
         });
@@ -125,7 +122,6 @@ describe("SharpWallet", function () {
         });
 
         it("Should reject non-owner approval", async function () {
-            // FIXED: General revert check
             await expect(
                 sharpWallet.connect(nonOwner).approveTransaction(0)
             ).to.be.reverted;
@@ -133,14 +129,12 @@ describe("SharpWallet", function () {
 
         it("Should reject double approval", async function () {
             await sharpWallet.connect(owner1).approveTransaction(0);
-            // FIXED: General revert check
             await expect(
                 sharpWallet.connect(owner1).approveTransaction(0)
             ).to.be.reverted;
         });
 
         it("Should reject approval of non-existent transaction", async function () {
-            // FIXED: General revert check
             await expect(
                 sharpWallet.connect(owner1).approveTransaction(99)
             ).to.be.reverted;
@@ -160,7 +154,7 @@ describe("SharpWallet", function () {
         beforeEach(async function () {
             await sharpWallet.connect(owner1).newTransaction(
                 nonOwner.address,
-                ethers.parseEther("1"),
+                ethers.utils.parseEther("1"),
                 "0x"
             );
             await sharpWallet.connect(owner1).approveTransaction(0);
@@ -182,7 +176,6 @@ describe("SharpWallet", function () {
         });
 
         it("Should reject non-owner revocation", async function () {
-            // FIXED: General revert check
             await expect(
                 sharpWallet.connect(nonOwner).revokeApproval(0)
             ).to.be.reverted;
@@ -193,7 +186,7 @@ describe("SharpWallet", function () {
         beforeEach(async function () {
             await sharpWallet.connect(owner1).newTransaction(
                 nonOwner.address,
-                ethers.parseEther("1"),
+                ethers.utils.parseEther("1"),
                 "0x"
             );
         });
@@ -209,8 +202,7 @@ describe("SharpWallet", function () {
                 .withArgs(0, owner1.address);
 
             const balanceAfter = await ethers.provider.getBalance(nonOwner.address);
-            // Ethers v6 uses BigInt math directly
-            expect(balanceAfter - balanceBefore).to.equal(ethers.parseEther("1"));
+            expect(balanceAfter.sub(balanceBefore)).to.equal(ethers.utils.parseEther("1"));
 
             const tx = await sharpWallet.getTransaction(0);
             expect(tx[2]).to.be.true; // executed flag
@@ -229,7 +221,6 @@ describe("SharpWallet", function () {
             await sharpWallet.connect(owner2).approveTransaction(0);
             await sharpWallet.connect(owner1).executeTransaction(0);
 
-            // FIXED: General revert check
             await expect(
                 sharpWallet.connect(owner1).executeTransaction(0)
             ).to.be.reverted;
@@ -239,7 +230,6 @@ describe("SharpWallet", function () {
             await sharpWallet.connect(owner1).approveTransaction(0);
             await sharpWallet.connect(owner2).approveTransaction(0);
 
-            // FIXED: General revert check
             await expect(
                 sharpWallet.connect(nonOwner).executeTransaction(0)
             ).to.be.reverted;
@@ -250,7 +240,6 @@ describe("SharpWallet", function () {
             await sharpWallet.connect(owner2).approveTransaction(0);
             await sharpWallet.connect(owner1).executeTransaction(0);
 
-            // FIXED: General revert check
             await expect(
                 sharpWallet.connect(owner3).approveTransaction(0)
             ).to.be.reverted;
@@ -264,9 +253,8 @@ describe("SharpWallet", function () {
                 [nonOwner.address]
             );
 
-            const walletAddress = await sharpWallet.getAddress();
             await sharpWallet.connect(owner1).newTransaction(
-                walletAddress,
+                sharpWallet.address,
                 0,
                 addOwnerData
             );
@@ -288,9 +276,8 @@ describe("SharpWallet", function () {
                 [owner3.address]
             );
 
-            const walletAddress = await sharpWallet.getAddress();
             await sharpWallet.connect(owner1).newTransaction(
-                walletAddress,
+                sharpWallet.address,
                 0,
                 removeOwnerData
             );
@@ -310,9 +297,8 @@ describe("SharpWallet", function () {
                 [3]
             );
 
-            const walletAddress = await sharpWallet.getAddress();
             await sharpWallet.connect(owner1).newTransaction(
-                walletAddress,
+                sharpWallet.address,
                 0,
                 updateReqData
             );
@@ -338,22 +324,20 @@ describe("SharpWallet", function () {
                 [owner1.address],
                 1
             );
-            await singleOwnerWallet.waitForDeployment();
+            await singleOwnerWallet.deployed();
 
             const removeOwnerData = singleOwnerWallet.interface.encodeFunctionData(
                 "removeOwner",
                 [owner1.address]
             );
-            
-            const walletAddress = await singleOwnerWallet.getAddress();
+
             await singleOwnerWallet.connect(owner1).newTransaction(
-                walletAddress,
+                singleOwnerWallet.address,
                 0,
                 removeOwnerData
             );
             await singleOwnerWallet.connect(owner1).approveTransaction(0);
 
-            // FIXED: Expecting outer generic error
             await expect(
                 singleOwnerWallet.connect(owner1).executeTransaction(0)
             ).to.be.revertedWith("Transaction execution failed");
@@ -363,7 +347,7 @@ describe("SharpWallet", function () {
     describe("View Functions", function () {
         it("Should return correct transaction details", async function () {
             const to = nonOwner.address;
-            const value = ethers.parseEther("1");
+            const value = ethers.utils.parseEther("1");
             const data = "0x1234";
 
             await sharpWallet.connect(owner1).newTransaction(to, value, data);
@@ -382,17 +366,49 @@ describe("SharpWallet", function () {
             expect(contractOwners.length).to.equal(3);
             expect(contractOwners).to.deep.equal(owners);
         });
+
+        it("Should return correct balance", async function () {
+            const balance = await sharpWallet.getBalance();
+            expect(balance).to.equal(ethers.utils.parseEther("10"));
+        });
+
+        it("Should return transaction count", async function () {
+            expect(await sharpWallet.getTransactionCount()).to.equal(0);
+            
+            await sharpWallet.connect(owner1).newTransaction(
+                nonOwner.address,
+                ethers.utils.parseEther("1"),
+                "0x"
+            );
+            
+            expect(await sharpWallet.getTransactionCount()).to.equal(1);
+        });
     });
 
     describe("Receive Function", function () {
-        it("Should accept ETH deposits", async function () {
-            const amount = ethers.parseEther("5");
+        it("Should accept ETH deposits and emit event", async function () {
+            const amount = ethers.utils.parseEther("5");
             await expect(
                 owner1.sendTransaction({
-                    to: await sharpWallet.getAddress(),
+                    to: sharpWallet.address,
                     value: amount
                 })
-            ).to.changeEtherBalance(sharpWallet, amount);
+            )
+                .to.emit(sharpWallet, "Deposit")
+                .withArgs(owner1.address, amount);
+        });
+
+        it("Should update balance after deposit", async function () {
+            const balanceBefore = await sharpWallet.getBalance();
+            const amount = ethers.utils.parseEther("3");
+            
+            await owner1.sendTransaction({
+                to: sharpWallet.address,
+                value: amount
+            });
+            
+            const balanceAfter = await sharpWallet.getBalance();
+            expect(balanceAfter.sub(balanceBefore)).to.equal(amount);
         });
     });
 });

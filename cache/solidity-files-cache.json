@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "C:\\Users\\khabe\\Downloads\\Blockchain\\contracts\\SharpWallet.sol": {
-      "lastModificationDate": 1765331787387,
-      "contentHash": "9feb2bf53830b708a5882c560f5d3c8d",
+      "lastModificationDate": 1765398139796,
+      "contentHash": "9c922a735765cc928ab5a9e116e3cd83",
       "sourceName": "contracts/SharpWallet.sol",
       "solcConfig": {
         "version": "0.8.19",
@@ -34,7 +34,7 @@
       ],
       "artifacts": [
         "ISharpWallet",
-        "MultiSigWallet"
+        "SharpWallet"
       ]
     }
   }

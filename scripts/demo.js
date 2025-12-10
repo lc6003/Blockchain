@@ -3,7 +3,7 @@ const { ethers } = require("hardhat");
 
 async function main() {
   console.log("=".repeat(80));
-  console.log("🎯 MULTISIG WALLET DEMO - Complete Functionality Showcase");
+  console.log("🎯 SHARPWALLET DEMO - Complete Functionality Showcase");
   console.log("=".repeat(80));
   console.log();
 
@@ -28,8 +28,8 @@ async function main() {
   console.log("Owners:", owners);
   console.log("Required Approvals:", requiredApprovals);
   
-  const MultiSigWallet = await ethers.getContractFactory("MultiSigWallet");
-  const wallet = await MultiSigWallet.deploy(owners, requiredApprovals);
+  const SharpWallet = await ethers.getContractFactory("SharpWallet");
+  const wallet = await SharpWallet.deploy(owners, requiredApprovals);
   await wallet.deployed();
   
   console.log("✅ Contract deployed to:", wallet.address);
@@ -39,12 +39,13 @@ async function main() {
   console.log("💰 FUNDING WALLET");
   console.log("-".repeat(80));
   const fundAmount = ethers.utils.parseEther("10");
-  await owner1.sendTransaction({
+  const fundTx = await owner1.sendTransaction({
     to: wallet.address,
     value: fundAmount,
   });
+  await fundTx.wait();
   
-  let balance = await ethers.provider.getBalance(wallet.address);
+  let balance = await wallet.getBalance();
   console.log("Wallet Balance:", ethers.utils.formatEther(balance), "ETH");
   console.log();
 
@@ -167,7 +168,7 @@ async function main() {
   console.log("Recipient Balance After:", ethers.utils.formatEther(recipientBalanceAfter), "ETH");
   console.log("Amount Received:", ethers.utils.formatEther(recipientBalanceAfter.sub(recipientBalanceBefore)), "ETH");
   
-  balance = await ethers.provider.getBalance(wallet.address);
+  balance = await wallet.getBalance();
   console.log("Wallet Balance After:", ethers.utils.formatEther(balance), "ETH");
   console.log();
 
@@ -289,14 +290,15 @@ async function main() {
   console.log("=".repeat(80));
   
   const finalOwners = await wallet.getOwners();
-  const finalBalance = await ethers.provider.getBalance(wallet.address);
+  const finalBalance = await wallet.getBalance();
   const finalRequiredApprovals = await wallet.requiredApprovals();
+  const txCount = await wallet.getTransactionCount();
   
   console.log("✅ Wallet Address:", wallet.address);
   console.log("✅ Total Owners:", finalOwners.length);
   console.log("✅ Required Approvals:", finalRequiredApprovals.toString());
   console.log("✅ Wallet Balance:", ethers.utils.formatEther(finalBalance), "ETH");
-  console.log("✅ Transactions Submitted: 4");
+  console.log("✅ Total Transactions:", txCount.toString());
   console.log("✅ Transactions Executed: 3");
   console.log();
   

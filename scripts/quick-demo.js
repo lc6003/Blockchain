@@ -2,7 +2,7 @@ const hre = require("hardhat");
 const { ethers } = require("hardhat");
 
 async function main() {
-  console.log("\n🎯 MULTISIG WALLET - QUICK DEMO\n");
+  console.log("\n🎯 SHARPWALLET - QUICK DEMO\n");
 
   // Setup
   const [owner1, owner2, owner3, recipient] = await ethers.getSigners();
@@ -10,8 +10,8 @@ async function main() {
   const requiredApprovals = 2;
 
   console.log("1️⃣  DEPLOY CONTRACT");
-  const MultiSigWallet = await ethers.getContractFactory("MultiSigWallet");
-  const wallet = await MultiSigWallet.deploy(owners, requiredApprovals);
+  const SharpWallet = await ethers.getContractFactory("SharpWallet");
+  const wallet = await SharpWallet.deploy(owners, requiredApprovals);
   await wallet.deployed();
   console.log("   ✅ Deployed to:", wallet.address);
   console.log("   ✅ Owners:", owners.length);
@@ -22,7 +22,7 @@ async function main() {
     to: wallet.address,
     value: ethers.utils.parseEther("10")
   });
-  let balance = await ethers.provider.getBalance(wallet.address);
+  let balance = await wallet.getBalance();
   console.log("   ✅ Balance:", ethers.utils.formatEther(balance), "ETH");
 
   console.log("\n3️⃣  SUBMIT TRANSACTION");
@@ -56,7 +56,7 @@ async function main() {
   console.log("   ✅ Transaction executed!");
   console.log("   📊 Recipient received:", ethers.utils.formatEther(recipientAfter.sub(recipientBefore)), "ETH");
   
-  balance = await ethers.provider.getBalance(wallet.address);
+  balance = await wallet.getBalance();
   console.log("   📊 Wallet balance now:", ethers.utils.formatEther(balance), "ETH");
 
   console.log("\n6️⃣  REVOKE APPROVAL DEMO");
@@ -92,6 +92,16 @@ async function main() {
   const finalOwners = await wallet.getOwners();
   console.log("   📊 Total owners now:", finalOwners.length);
 
+  console.log("\n8️⃣  DEMONSTRATE DEPOSIT EVENT");
+  const depositTx = await owner2.sendTransaction({
+    to: wallet.address,
+    value: ethers.utils.parseEther("2")
+  });
+  const receipt = await depositTx.wait();
+  const depositEvent = receipt.events?.find(e => e.event === "Deposit");
+  console.log("   ✅ Deposit received from:", depositEvent.args.sender);
+  console.log("   📊 Amount:", ethers.utils.formatEther(depositEvent.args.amount), "ETH");
+
   console.log("\n✅ DEMO COMPLETE!");
   console.log("\n📊 SUMMARY:");
   console.log("   • Deployed multi-sig wallet with 3 owners");
@@ -99,6 +109,7 @@ async function main() {
   console.log("   • Submitted, approved, and executed transaction");
   console.log("   • Demonstrated approval revocation");
   console.log("   • Added new owner through multi-sig process");
+  console.log("   • Showed deposit event emission");
   console.log("   • All functions and events working correctly!\n");
 }
 
