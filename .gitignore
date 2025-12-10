@@ -1,6 +1,4 @@
 # Hardhat files
-cache/
-artifacts/
 typechain-types/
 
 # Node modules
