@@ -42,6 +42,9 @@ interface ISharpWallet {
     /// @notice Emitted when required confirmations are updated.
     event RequirementChanged(uint256 newRequirement);
 
+    /// @notice Emitted when ETH is deposited into the wallet.
+    event Deposit(address indexed sender, uint256 amount);
+
     /*//////////////////////////////////////////////////////////////
                               FUNCTIONS
     //////////////////////////////////////////////////////////////*/
@@ -96,6 +99,12 @@ interface ISharpWallet {
     /// @notice Returns the number of required approvals.
     function requiredApprovals() external view returns (uint256);
 
+    /// @notice Returns the contract's ETH balance.
+    function getBalance() external view returns (uint256);
+
+    /// @notice Returns the total number of transactions.
+    function getTransactionCount() external view returns (uint256);
+
     /*//////////////////////////////////////////////////////////////
                          OWNER MANAGEMENT FUNCTIONS
     //////////////////////////////////////////////////////////////*/
@@ -110,7 +119,7 @@ interface ISharpWallet {
     function updateRequirement(uint256 newRequirement) external;
 }
 
-contract MultiSigWallet is ISharpWallet {
+contract SharpWallet is ISharpWallet {
     /*//////////////////////////////////////////////////////////////
                                TYPE DECLARATIONS
     //////////////////////////////////////////////////////////////*/
@@ -174,7 +183,7 @@ contract MultiSigWallet is ISharpWallet {
         for (uint256 i = 0; i < _owners.length; i++) {
             address owner = _owners[i];
 
-            require(owner != address(0), "Invalid owner");
+            require(owner != address(0), "Invalid owner address");
             require(!isOwner[owner], "Owner not unique");
 
             isOwner[owner] = true;
@@ -188,7 +197,9 @@ contract MultiSigWallet is ISharpWallet {
                           RECEIVE FUNCTION
     //////////////////////////////////////////////////////////////*/
 
-    receive() external payable {}
+    receive() external payable {
+        emit Deposit(msg.sender, msg.value);
+    }
 
     /*//////////////////////////////////////////////////////////////
                           TRANSACTION FUNCTIONS
@@ -348,6 +359,18 @@ contract MultiSigWallet is ISharpWallet {
         return requiredConfirmations;
     }
 
+    /// @notice Get the contract's ETH balance
+    /// @return The balance in wei
+    function getBalance() external view override returns (uint256) {
+        return address(this).balance;
+    }
+
+    /// @notice Get the total number of transactions
+    /// @return The number of transactions
+    function getTransactionCount() external view override returns (uint256) {
+        return transactions.length;
+    }
+
     /*//////////////////////////////////////////////////////////////
                          OWNER MANAGEMENT FUNCTIONS
     //////////////////////////////////////////////////////////////*/
@@ -356,7 +379,7 @@ contract MultiSigWallet is ISharpWallet {
     /// @param newOwner Address of new owner
     function addOwner(address newOwner) external override {
         require(msg.sender == address(this), "Only wallet can add owner");
-        require(newOwner != address(0), "Invalid owner");
+        require(newOwner != address(0), "Invalid owner address");
         require(!isOwner[newOwner], "Owner already exists");
 
         isOwner[newOwner] = true;
