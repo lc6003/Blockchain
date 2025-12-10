@@ -119,6 +119,7 @@ interface ISharpWallet {
     function updateRequirement(uint256 newRequirement) external;
 }
 
+
 contract SharpWallet is ISharpWallet {
     /*//////////////////////////////////////////////////////////////
                                TYPE DECLARATIONS
