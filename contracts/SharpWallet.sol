@@ -208,6 +208,12 @@ contract SharpWallet is ISharpWallet {
         emit Deposit(msg.sender, msg.value);
     }
 
+    /// @notice Fallback function called when msg.data is not empty
+
+    fallback() external payable {
+        emit Deposit(msg.sender, msg.value);
+    }
+
     /*//////////////////////////////////////////////////////////////
                           TRANSACTION FUNCTIONS
     //////////////////////////////////////////////////////////////*/
