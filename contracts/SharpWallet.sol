@@ -377,5 +377,3 @@ contract SharpWallet is ISharpWallet {
 
 
 }
-
-   

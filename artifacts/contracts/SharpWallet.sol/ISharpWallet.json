@@ -158,19 +158,6 @@
     {
       "inputs": [
         {
-          "internalType": "address",
-          "name": "newOwner",
-          "type": "address"
-        }
-      ],
-      "name": "addOwner",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
           "internalType": "uint256",
           "name": "txId",
           "type": "uint256"
@@ -345,19 +332,6 @@
       "type": "function"
     },
     {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "owner",
-          "type": "address"
-        }
-      ],
-      "name": "removeOwner",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
       "inputs": [],
       "name": "requiredApprovals",
       "outputs": [
@@ -379,19 +353,6 @@
         }
       ],
       "name": "revokeApproval",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "newRequirement",
-          "type": "uint256"
-        }
-      ],
-      "name": "updateRequirement",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"

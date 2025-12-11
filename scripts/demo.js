@@ -227,83 +227,83 @@ async function main() {
   console.log("Approvals after revoke:", approvals.toString());
   console.log();
 
-  // Demo 13: Add New Owner (via multi-sig)
-  console.log("👥 DEMO 13: ADD NEW OWNER (Multi-sig Process)");
-  console.log("-".repeat(80));
-  const newOwner = ethers.Wallet.createRandom();
-  console.log("New Owner Address:", newOwner.address);
+//   // Demo 13: Add New Owner (via multi-sig)
+//   console.log("👥 DEMO 13: ADD NEW OWNER (Multi-sig Process)");
+//   console.log("-".repeat(80));
+//   const newOwner = ethers.Wallet.createRandom();
+//   console.log("New Owner Address:", newOwner.address);
   
-  // Encode the addOwner function call - FIXED for Ethers v5
-  const iface = new ethers.utils.Interface([
-    "function addOwner(address newOwner)"
-  ]);
-  const addOwnerData = iface.encodeFunctionData("addOwner", [newOwner.address]);
+//   // Encode the addOwner function call - FIXED for Ethers v5
+//   const iface = new ethers.utils.Interface([
+//     "function addOwner(address newOwner)"
+//   ]);
+//   const addOwnerData = iface.encodeFunctionData("addOwner", [newOwner.address]);
   
-  console.log("Step 1: Submit transaction to add owner...");
-  const tx7 = await wallet.connect(owner1).newTransaction(
-    wallet.address,
-    0,
-    addOwnerData
-  );
-  await tx7.wait();
-  console.log("✅ Transaction 2 submitted");
+//   console.log("Step 1: Submit transaction to add owner...");
+//   const tx7 = await wallet.connect(owner1).newTransaction(
+//     wallet.address,
+//     0,
+//     addOwnerData
+//   );
+//   await tx7.wait();
+//   console.log("✅ Transaction 2 submitted");
   
-  console.log("Step 2: Owner 1 approves...");
-  await wallet.connect(owner1).approveTransaction(2);
-  console.log("✅ Owner 1 approved");
+//   console.log("Step 2: Owner 1 approves...");
+//   await wallet.connect(owner1).approveTransaction(2);
+//   console.log("✅ Owner 1 approved");
   
-  console.log("Step 3: Owner 2 approves...");
-  await wallet.connect(owner2).approveTransaction(2);
-  console.log("✅ Owner 2 approved");
+//   console.log("Step 3: Owner 2 approves...");
+//   await wallet.connect(owner2).approveTransaction(2);
+//   console.log("✅ Owner 2 approved");
   
-  console.log("Step 4: Execute transaction...");
-  const tx8 = await wallet.connect(owner3).executeTransaction(2);
-  const receipt8 = await tx8.wait();
+//   console.log("Step 4: Execute transaction...");
+//   const tx8 = await wallet.connect(owner3).executeTransaction(2);
+//   const receipt8 = await tx8.wait();
   
-  const ownerAddedEvent = receipt8.events?.find(e => e.event === "OwnerAdded");
-  if (ownerAddedEvent) {
-    console.log("✅ New Owner Added!");
-    console.log("  New Owner:", ownerAddedEvent.args.newOwner);
-  }
+//   const ownerAddedEvent = receipt8.events?.find(e => e.event === "OwnerAdded");
+//   if (ownerAddedEvent) {
+//     console.log("✅ New Owner Added!");
+//     console.log("  New Owner:", ownerAddedEvent.args.newOwner);
+//   }
   
-  const updatedOwners = await wallet.getOwners();
-  console.log("Current Owners Count:", updatedOwners.length);
-  console.log();
+//   const updatedOwners = await wallet.getOwners();
+//   console.log("Current Owners Count:", updatedOwners.length);
+//   console.log();
 
-  // Demo 14: Update Requirement (via multi-sig)
-  console.log("⚙️ DEMO 14: UPDATE REQUIREMENT (Multi-sig Process)");
-  console.log("-".repeat(80));
-  const newRequirement = 3;
-  console.log("New Requirement:", newRequirement);
+//   // Demo 14: Update Requirement (via multi-sig)
+//   console.log("⚙️ DEMO 14: UPDATE REQUIREMENT (Multi-sig Process)");
+//   console.log("-".repeat(80));
+//   const newRequirement = 3;
+//   console.log("New Requirement:", newRequirement);
   
-  // FIXED for Ethers v5
-  const iface2 = new ethers.utils.Interface([
-    "function updateRequirement(uint256 newRequirement)"
-  ]);
-  const updateReqData = iface2.encodeFunctionData("updateRequirement", [newRequirement]);
+//   // FIXED for Ethers v5
+//   const iface2 = new ethers.utils.Interface([
+//     "function updateRequirement(uint256 newRequirement)"
+//   ]);
+//   const updateReqData = iface2.encodeFunctionData("updateRequirement", [newRequirement]);
   
-  console.log("Step 1: Submit transaction...");
-  await wallet.connect(owner1).newTransaction(wallet.address, 0, updateReqData);
+//   console.log("Step 1: Submit transaction...");
+//   await wallet.connect(owner1).newTransaction(wallet.address, 0, updateReqData);
   
-  console.log("Step 2: Owner 1 approves...");
-  await wallet.connect(owner1).approveTransaction(3);
+//   console.log("Step 2: Owner 1 approves...");
+//   await wallet.connect(owner1).approveTransaction(3);
   
-  console.log("Step 3: Owner 2 approves...");
-  await wallet.connect(owner2).approveTransaction(3);
+//   console.log("Step 3: Owner 2 approves...");
+//   await wallet.connect(owner2).approveTransaction(3);
   
-  console.log("Step 4: Execute transaction...");
-  const tx9 = await wallet.connect(owner1).executeTransaction(3);
-  const receipt9 = await tx9.wait();
+//   console.log("Step 4: Execute transaction...");
+//   const tx9 = await wallet.connect(owner1).executeTransaction(3);
+//   const receipt9 = await tx9.wait();
   
-  const reqChangedEvent = receipt9.events?.find(e => e.event === "RequirementChanged");
-  if (reqChangedEvent) {
-    console.log("✅ Requirement Updated!");
-    console.log("  New Requirement:", reqChangedEvent.args.newRequirement.toString());
-  }
+//   const reqChangedEvent = receipt9.events?.find(e => e.event === "RequirementChanged");
+//   if (reqChangedEvent) {
+//     console.log("✅ Requirement Updated!");
+//     console.log("  New Requirement:", reqChangedEvent.args.newRequirement.toString());
+//   }
   
-  const finalRequirement = await wallet.requiredApprovals();
-  console.log("Current Requirement:", finalRequirement.toString());
-  console.log();
+//   const finalRequirement = await wallet.requiredApprovals();
+//   console.log("Current Requirement:", finalRequirement.toString());
+//   console.log();
 
   // Final Summary
   console.log("=".repeat(80));
