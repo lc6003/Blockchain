@@ -45,6 +45,12 @@ interface ISharpWallet {
     /// @notice Emitted when ETH is deposited into the wallet.
     event Deposit(address indexed sender, uint256 amount);
 
+    /// @notice Emitted when a transaction is deleted.
+    event TransactionDeleted(
+        uint256 indexed txId,
+        address indexed deleter
+    );
+
     /*//////////////////////////////////////////////////////////////
                               FUNCTIONS
     //////////////////////////////////////////////////////////////*/
@@ -105,6 +111,8 @@ interface ISharpWallet {
     /// @notice Returns the total number of transactions.
     function getTransactionCount() external view returns (uint256);
 
+    /// @notice Delete a transaction (only proposer, only if no others approved).
+    function deleteTransaction(uint256 txId) external;
 }
 
 
@@ -114,6 +122,7 @@ contract SharpWallet is ISharpWallet {
     error TxDoesNotExist();
     error TxAlreadyExecuted();
     error TxAlreadyApproved();
+    error TxDeleted();
 
     /*//////////////////////////////////////////////////////////////
                                TYPE DECLARATIONS
@@ -125,6 +134,7 @@ contract SharpWallet is ISharpWallet {
         bool executed;
         uint256 numConfirmations;
         bytes data;
+        bool deleted;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -158,6 +168,11 @@ contract SharpWallet is ISharpWallet {
 
     modifier notApproved(uint256 txId) {
         if (approved[txId][msg.sender]) revert TxAlreadyApproved();
+        _;
+    }
+
+    modifier notDeleted(uint256 txId) {
+        if (transactions[txId].deleted) revert TxDeleted();
         _;
     }
 
@@ -227,7 +242,8 @@ contract SharpWallet is ISharpWallet {
                 value: value,
                 executed: false,
                 numConfirmations: 1,
-                data: data
+                data: data,
+                deleted: false 
             })
         );
 
@@ -245,6 +261,7 @@ contract SharpWallet is ISharpWallet {
         onlyOwner
         txExists(txId)
         notExecuted(txId)
+        notDeleted(txId)
         notApproved(txId)
     {
         approved[txId][msg.sender] = true;
@@ -261,6 +278,7 @@ contract SharpWallet is ISharpWallet {
         onlyOwner
         txExists(txId)
         notExecuted(txId)
+        notDeleted(txId)
     {
         require(approved[txId][msg.sender], "Transaction not approved");
 
@@ -278,6 +296,7 @@ contract SharpWallet is ISharpWallet {
         onlyOwner
         txExists(txId)
         notExecuted(txId)
+        notDeleted(txId)
     {
         Transaction storage transaction = transactions[txId];
 
@@ -378,5 +397,32 @@ contract SharpWallet is ISharpWallet {
         return transactions.length;
     }
 
+    /// @notice Delete a transaction (only proposer, only if no others approved)
+    /// @param txId Transaction ID to delete
+    function deleteTransaction(uint256 txId)
+        external
+        override
+        onlyOwner
+        txExists(txId)
+        notExecuted(txId)
+        notDeleted(txId)
+    {
+        Transaction storage transaction = transactions[txId];
+        
+        // Only proposer can delete
+        require(approved[txId][msg.sender], "You didn't propose this");
+        
+        // Can only delete if no one else approved (only proposer's auto-approval exists)
+        require(transaction.numConfirmations == 1, "Others already approved");
+
+        // Mark as deleted (don't actually remove to preserve array indices)
+        transaction.deleted = true;
+        
+        // Remove the proposer's approval
+        approved[txId][msg.sender] = false;
+        transaction.numConfirmations = 0;
+
+        emit TransactionDeleted(txId, msg.sender);
+    }
 
 }
