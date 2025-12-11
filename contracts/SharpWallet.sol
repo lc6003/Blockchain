@@ -111,6 +111,9 @@ interface ISharpWallet {
     /// @notice Returns the total number of transactions.
     function getTransactionCount() external view returns (uint256);
 
+    /// @notice Get list of approvers for a transaction.
+    function getApprovers(uint256 txId) external view returns (address[] memory);
+
     /// @notice Delete a transaction (only proposer, only if no others approved).
     function deleteTransaction(uint256 txId) external;
 }
@@ -423,6 +426,36 @@ contract SharpWallet is ISharpWallet {
         transaction.numConfirmations = 0;
 
         emit TransactionDeleted(txId, msg.sender);
+    }
+
+    /// @notice Get list of owners who approved a transaction
+    /// @param txId Transaction ID
+    /// @return Array of approver addresses
+    function getApprovers(uint256 txId)
+        external
+        view
+        override
+        txExists(txId)
+        returns (address[] memory)
+    {
+        // Create temporary array to hold approvers
+        address[] memory approversList = new address[](owners.length);
+        uint256 count;
+
+        // Loop through all owners and check if they approved
+        for (uint256 i = 0; i < owners.length; i++) {
+            if (approved[txId][owners[i]]) {
+                approversList[count] = owners[i];
+                count++;
+            }
+        }
+
+        // Trim array to actual size using assembly
+        assembly {
+            mstore(approversList, count)
+        }
+
+        return approversList;
     }
 
 }
