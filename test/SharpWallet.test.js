@@ -337,4 +337,93 @@ describe("SharpWallet", function () {
             expect(balanceAfter.sub(balanceBefore)).to.equal(amount);
         });
     });
+
+    describe("Delete Transaction Function", function () {
+        beforeEach(async function () {
+            // Create a transaction (auto-approved by owner1)
+            await sharpWallet.connect(owner1).newTransaction(
+                nonOwner.address,
+                ethers.utils.parseEther("1"),
+                "0x"
+            );
+        });
+
+        it("Should allow proposer to delete their own transaction if alone", async function () {
+            // Transaction has only 1 approval (proposer's auto-approval)
+            await expect(sharpWallet.connect(owner1).deleteTransaction(0))
+                .to.emit(sharpWallet, "TransactionDeleted")
+                .withArgs(0, owner1.address);
+
+            // Approval count should be 0
+            expect(await sharpWallet.approvalCount(0)).to.equal(0);
+            
+            // Proposer should no longer be approved
+            expect(await sharpWallet.isApproved(0, owner1.address)).to.be.false;
+        });
+
+        it("Should reject deletion if others already approved", async function () {
+            // Add another approval
+            await sharpWallet.connect(owner2).approveTransaction(0);
+
+            // Now transaction has 2 approvals, can't delete
+            await expect(
+                sharpWallet.connect(owner1).deleteTransaction(0)
+            ).to.be.revertedWith("Others already approved");
+        });
+
+        it("Should reject deletion by non-proposer", async function () {
+            // Owner2 tries to delete owner1's transaction
+            await expect(
+                sharpWallet.connect(owner2).deleteTransaction(0)
+            ).to.be.revertedWith("You didn't propose this");
+        });
+
+        it("Should reject operations on deleted transaction", async function () {
+            // Delete the transaction
+            await sharpWallet.connect(owner1).deleteTransaction(0);
+
+            // Try to approve deleted transaction
+            await expect(
+                sharpWallet.connect(owner2).approveTransaction(0)
+            ).to.be.reverted; // Will revert with TxDeleted error
+
+            // Try to execute deleted transaction
+            await expect(
+                sharpWallet.connect(owner1).executeTransaction(0)
+            ).to.be.reverted;
+        });
+
+        it("Should reject deletion of executed transaction", async function () {
+            // Get enough approvals and execute
+            await sharpWallet.connect(owner2).approveTransaction(0);
+            await sharpWallet.connect(owner1).executeTransaction(0);
+
+            // Try to delete executed transaction
+            await expect(
+                sharpWallet.connect(owner1).deleteTransaction(0)
+            ).to.be.reverted; // Will revert with TxAlreadyExecuted
+        });
+
+        it("Should reject deletion of non-existent transaction", async function () {
+            await expect(
+                sharpWallet.connect(owner1).deleteTransaction(99)
+            ).to.be.reverted; // Will revert with TxDoesNotExist
+        });
+
+        it("Should allow deletion and creation of new transaction", async function () {
+            // Delete first transaction
+            await sharpWallet.connect(owner1).deleteTransaction(0);
+
+            // Create a new transaction (will have ID 1)
+            await sharpWallet.connect(owner2).newTransaction(
+                nonOwner.address,
+                ethers.utils.parseEther("2"),
+                "0x"
+            );
+
+            // New transaction should work normally
+            expect(await sharpWallet.getTransactionCount()).to.equal(2);
+            expect(await sharpWallet.approvalCount(1)).to.equal(1); // Owner2's auto-approval
+        });
+    });
 });
