@@ -13,12 +13,11 @@ describe("SharpWallet", function () {
 
         const SharpWallet = await ethers.getContractFactory("SharpWallet");
         sharpWallet = await SharpWallet.deploy(owners, requiredApprovals);
-        await sharpWallet.deployed(); // Ethers v5 syntax
+        await sharpWallet.deployed();
 
-        // Fund the wallet
         await owner1.sendTransaction({
-            to: sharpWallet.address, // Ethers v5 syntax
-            value: ethers.utils.parseEther("10") // Ethers v5 syntax
+            to: sharpWallet.address,
+            value: ethers.utils.parseEther("10")
         });
     });
 
@@ -71,17 +70,34 @@ describe("SharpWallet", function () {
         });
     });
 
-    describe("Transaction Submission", function () {
+    // ============================================================
+    // CHANGED FOR AUTO-APPROVAL: Transaction now starts with 1 approval
+    // ============================================================
+    describe("Transaction Submission - AUTO-APPROVAL", function () {
         it("Should allow owner to submit transaction", async function () {
             const to = nonOwner.address;
             const value = ethers.utils.parseEther("1");
             const data = "0x";
 
-            await expect(
-                sharpWallet.connect(owner1).newTransaction(to, value, data)
-            )
-                .to.emit(sharpWallet, "TransactionSubmitted")
-                .withArgs(0, owner1.address, to, value, data);
+            // Should emit BOTH events now
+            const tx = await sharpWallet.connect(owner1).newTransaction(to, value, data);
+            const receipt = await tx.wait();
+            
+            // Check both events are emitted
+            expect(receipt.events.some(e => e.event === "TransactionSubmitted")).to.be.true;
+            expect(receipt.events.some(e => e.event === "TransactionApproved")).to.be.true;
+        });
+
+        it("Should auto-approve for proposer", async function () {
+            // CHANGED: Transaction now starts with 1 approval
+            await sharpWallet.connect(owner1).newTransaction(
+                nonOwner.address,
+                ethers.utils.parseEther("1"),
+                "0x"
+            );
+
+            expect(await sharpWallet.approvalCount(0)).to.equal(1); // CHANGED from 0 to 1
+            expect(await sharpWallet.isApproved(0, owner1.address)).to.be.true; // CHANGED to true
         });
 
         it("Should reject non-owner submission", async function () {
@@ -103,8 +119,12 @@ describe("SharpWallet", function () {
         });
     });
 
+    // ============================================================
+    // CHANGED FOR AUTO-APPROVAL: Now need N-1 additional approvals
+    // ============================================================
     describe("Transaction Approval", function () {
         beforeEach(async function () {
+            // Transaction already has 1 approval from proposer
             await sharpWallet.connect(owner1).newTransaction(
                 nonOwner.address,
                 ethers.utils.parseEther("1"),
@@ -112,25 +132,26 @@ describe("SharpWallet", function () {
             );
         });
 
-        it("Should allow owner to approve transaction", async function () {
-            await expect(sharpWallet.connect(owner1).approveTransaction(0))
+        it("Should allow second owner to approve transaction", async function () {
+            // CHANGED: Now owner2 approves (owner1 already approved)
+            await expect(sharpWallet.connect(owner2).approveTransaction(0))
                 .to.emit(sharpWallet, "TransactionApproved")
-                .withArgs(0, owner1.address);
+                .withArgs(0, owner2.address);
 
-            expect(await sharpWallet.isApproved(0, owner1.address)).to.be.true;
-            expect(await sharpWallet.approvalCount(0)).to.equal(1);
+            expect(await sharpWallet.isApproved(0, owner2.address)).to.be.true;
+            expect(await sharpWallet.approvalCount(0)).to.equal(2); // CHANGED: 1 (proposer) + 1 (owner2)
+        });
+
+        it("Should reject proposer approving again", async function () {
+            // CHANGED: Owner1 already approved when submitting
+            await expect(
+                sharpWallet.connect(owner1).approveTransaction(0)
+            ).to.be.reverted;
         });
 
         it("Should reject non-owner approval", async function () {
             await expect(
                 sharpWallet.connect(nonOwner).approveTransaction(0)
-            ).to.be.reverted;
-        });
-
-        it("Should reject double approval", async function () {
-            await sharpWallet.connect(owner1).approveTransaction(0);
-            await expect(
-                sharpWallet.connect(owner1).approveTransaction(0)
             ).to.be.reverted;
         });
 
@@ -141,12 +162,14 @@ describe("SharpWallet", function () {
         });
 
         it("Should track multiple approvals", async function () {
-            await sharpWallet.connect(owner1).approveTransaction(0);
+            // CHANGED: Owner1 already approved, so we use owner2 and owner3
             await sharpWallet.connect(owner2).approveTransaction(0);
+            await sharpWallet.connect(owner3).approveTransaction(0);
 
-            expect(await sharpWallet.approvalCount(0)).to.equal(2);
+            expect(await sharpWallet.approvalCount(0)).to.equal(3); // CHANGED: 1+2=3
             expect(await sharpWallet.isApproved(0, owner1.address)).to.be.true;
             expect(await sharpWallet.isApproved(0, owner2.address)).to.be.true;
+            expect(await sharpWallet.isApproved(0, owner3.address)).to.be.true;
         });
     });
 
@@ -157,21 +180,23 @@ describe("SharpWallet", function () {
                 ethers.utils.parseEther("1"),
                 "0x"
             );
-            await sharpWallet.connect(owner1).approveTransaction(0);
+            // CHANGED: Owner1 already approved via auto-approval, so add owner2
+            await sharpWallet.connect(owner2).approveTransaction(0);
         });
 
         it("Should allow owner to revoke approval", async function () {
-            await expect(sharpWallet.connect(owner1).revokeApproval(0))
+            // CHANGED: Now owner2 revokes (owner1 auto-approved)
+            await expect(sharpWallet.connect(owner2).revokeApproval(0))
                 .to.emit(sharpWallet, "ApprovalRevoked")
-                .withArgs(0, owner1.address);
+                .withArgs(0, owner2.address);
 
-            expect(await sharpWallet.isApproved(0, owner1.address)).to.be.false;
-            expect(await sharpWallet.approvalCount(0)).to.equal(0);
+            expect(await sharpWallet.isApproved(0, owner2.address)).to.be.false;
+            expect(await sharpWallet.approvalCount(0)).to.equal(1); // CHANGED: Back to just proposer
         });
 
         it("Should reject revocation of non-approved transaction", async function () {
             await expect(
-                sharpWallet.connect(owner2).revokeApproval(0)
+                sharpWallet.connect(owner3).revokeApproval(0)
             ).to.be.revertedWith("Transaction not approved");
         });
 
@@ -182,8 +207,12 @@ describe("SharpWallet", function () {
         });
     });
 
+    // ============================================================
+    // CHANGED FOR AUTO-APPROVAL: Now need only 1 more approval
+    // ============================================================
     describe("Transaction Execution", function () {
         beforeEach(async function () {
+            // Transaction starts with 1 approval from proposer
             await sharpWallet.connect(owner1).newTransaction(
                 nonOwner.address,
                 ethers.utils.parseEther("1"),
@@ -192,7 +221,7 @@ describe("SharpWallet", function () {
         });
 
         it("Should execute transaction with enough approvals", async function () {
-            await sharpWallet.connect(owner1).approveTransaction(0);
+            // CHANGED: Only need 1 more approval (already have 1 from proposer)
             await sharpWallet.connect(owner2).approveTransaction(0);
 
             const balanceBefore = await ethers.provider.getBalance(nonOwner.address);
@@ -205,19 +234,17 @@ describe("SharpWallet", function () {
             expect(balanceAfter.sub(balanceBefore)).to.equal(ethers.utils.parseEther("1"));
 
             const tx = await sharpWallet.getTransaction(0);
-            expect(tx[2]).to.be.true; // executed flag
+            expect(tx[2]).to.be.true;
         });
 
         it("Should reject execution without enough approvals", async function () {
-            await sharpWallet.connect(owner1).approveTransaction(0);
-
+            // CHANGED: Now have 1 approval (proposer), need 2 total
             await expect(
                 sharpWallet.connect(owner1).executeTransaction(0)
             ).to.be.revertedWith("Not enough approvals");
         });
 
         it("Should reject double execution", async function () {
-            await sharpWallet.connect(owner1).approveTransaction(0);
             await sharpWallet.connect(owner2).approveTransaction(0);
             await sharpWallet.connect(owner1).executeTransaction(0);
 
@@ -227,7 +254,6 @@ describe("SharpWallet", function () {
         });
 
         it("Should reject non-owner execution", async function () {
-            await sharpWallet.connect(owner1).approveTransaction(0);
             await sharpWallet.connect(owner2).approveTransaction(0);
 
             await expect(
@@ -236,7 +262,6 @@ describe("SharpWallet", function () {
         });
 
         it("Should reject approval of executed transaction", async function () {
-            await sharpWallet.connect(owner1).approveTransaction(0);
             await sharpWallet.connect(owner2).approveTransaction(0);
             await sharpWallet.connect(owner1).executeTransaction(0);
 
@@ -253,13 +278,12 @@ describe("SharpWallet", function () {
             const data = "0x1234";
 
             await sharpWallet.connect(owner1).newTransaction(to, value, data);
-            await sharpWallet.connect(owner1).approveTransaction(0);
 
             const tx = await sharpWallet.getTransaction(0);
             expect(tx[0]).to.equal(to);
             expect(tx[1]).to.equal(value);
-            expect(tx[2]).to.be.false; // not executed
-            expect(tx[3]).to.equal(1); // one confirmation
+            expect(tx[2]).to.be.false;
+            expect(tx[3]).to.equal(1); // CHANGED: Now starts with 1 (proposer)
             expect(tx[4]).to.equal(data);
         });
 
