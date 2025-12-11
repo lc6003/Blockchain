@@ -25,30 +25,45 @@ async function main() {
   let balance = await wallet.getBalance();
   console.log("   ✅ Balance:", ethers.utils.formatEther(balance), "ETH");
 
-  console.log("\n3️⃣  SUBMIT TRANSACTION");
+  console.log("\n3️⃣  SUBMIT TRANSACTION (AUTO-APPROVAL) ⭐");
   const tx1 = await wallet.connect(owner1).newTransaction(
     recipient.address,
     ethers.utils.parseEther("1"),
     "0x"
   );
-  await tx1.wait();
+  const receipt1 = await tx1.wait();
   console.log("   ✅ Transaction 0 submitted: Send 1 ETH to recipient");
-
-  console.log("\n4️⃣  APPROVE TRANSACTION (Need 2 approvals)");
-  await wallet.connect(owner1).approveTransaction(0);
-  console.log("   ✅ Owner 1 approved");
+  
+  // Check for auto-approval
+  const autoApproveEvent = receipt1.events?.find(e => e.event === "TransactionApproved");
+  if (autoApproveEvent) {
+    console.log("   ⭐ Auto-approved by proposer!");
+  }
   
   let approvals = await wallet.approvalCount(0);
-  console.log("   📊 Current approvals:", approvals.toString(), "/ 2");
-  
+  console.log("   📊 Current approvals:", approvals.toString(), "/ 2 (includes auto-approval)");
+
+  console.log("\n4️⃣  GET APPROVERS (NEW FUNCTION) ⭐");
+  let approvers = await wallet.getApprovers(0);
+  console.log("   👥 Who approved:");
+  approvers.forEach((addr, i) => {
+    const ownerNum = addr === owner1.address ? "Owner 1" : 
+                     addr === owner2.address ? "Owner 2" : "Owner 3";
+    console.log(`      ${i + 1}. ${ownerNum}`);
+  });
+
+  console.log("\n5️⃣  SECOND OWNER APPROVES (Need 1 more)");
   await wallet.connect(owner2).approveTransaction(0);
   console.log("   ✅ Owner 2 approved");
   
   approvals = await wallet.approvalCount(0);
   console.log("   📊 Current approvals:", approvals.toString(), "/ 2");
+  
+  approvers = await wallet.getApprovers(0);
+  console.log("   👥 Updated approvers:", approvers.length, "owners");
   console.log("   ✅ Enough approvals! Ready to execute");
 
-  console.log("\n5️⃣  EXECUTE TRANSACTION");
+  console.log("\n6️⃣  EXECUTE TRANSACTION");
   const recipientBefore = await ethers.provider.getBalance(recipient.address);
   await wallet.connect(owner1).executeTransaction(0);
   const recipientAfter = await ethers.provider.getBalance(recipient.address);
@@ -59,68 +74,81 @@ async function main() {
   balance = await wallet.getBalance();
   console.log("   📊 Wallet balance now:", ethers.utils.formatEther(balance), "ETH");
 
-  console.log("\n6️⃣  REVOKE APPROVAL DEMO");
-  await wallet.connect(owner1).newTransaction(recipient.address, ethers.utils.parseEther("0.5"), "0x");
-  console.log("   ✅ New transaction 1 submitted");
+  console.log("\n7️⃣  DELETE OWN TRANSACTION (NEW FUNCTION) ⭐");
+  await wallet.connect(owner2).newTransaction(recipient.address, ethers.utils.parseEther("0.5"), "0x");
+  console.log("   ✅ Owner 2 submitted transaction 1");
   
-  await wallet.connect(owner1).approveTransaction(1);
+  approvers = await wallet.getApprovers(1);
+  console.log("   👥 Approvers:", approvers.length, "(only proposer)");
+  
+  const tx2 = await wallet.connect(owner2).deleteTransaction(1);
+  const receipt2 = await tx2.wait();
+  
+  const deleteEvent = receipt2.events?.find(e => e.event === "TransactionDeleted");
+  if (deleteEvent) {
+    console.log("   ✅ Transaction deleted by proposer!");
+  }
+  
+  approvers = await wallet.getApprovers(1);
+  console.log("   👥 Approvers after deletion:", approvers.length);
+
+  console.log("\n8️⃣  CANNOT DELETE IF OTHERS APPROVED");
+  await wallet.connect(owner1).newTransaction(recipient.address, ethers.utils.parseEther("0.3"), "0x");
+  console.log("   ✅ Owner 1 submitted transaction 2");
+  
+  await wallet.connect(owner2).approveTransaction(2);
+  console.log("   ✅ Owner 2 also approved");
+  
+  try {
+    await wallet.connect(owner1).deleteTransaction(2);
+    console.log("   ❌ Should not reach here!");
+  } catch (error) {
+    console.log("   ✅ Deletion blocked: Others already approved!");
+  }
+
+  console.log("\n9️⃣  REVOKE APPROVAL DEMO");
+  await wallet.connect(owner3).newTransaction(recipient.address, ethers.utils.parseEther("0.2"), "0x");
+  console.log("   ✅ Owner 3 submitted transaction 3");
+  
+  await wallet.connect(owner1).approveTransaction(3);
   console.log("   ✅ Owner 1 approved");
   
-  approvals = await wallet.approvalCount(1);
-  console.log("   📊 Approvals:", approvals.toString());
+  approvers = await wallet.getApprovers(3);
+  console.log("   👥 Approvers:", approvers.length);
   
-  await wallet.connect(owner1).revokeApproval(1);
+  await wallet.connect(owner1).revokeApproval(3);
   console.log("   ✅ Owner 1 revoked approval");
   
-  approvals = await wallet.approvalCount(1);
-  console.log("   📊 Approvals after revoke:", approvals.toString());
+  approvers = await wallet.getApprovers(3);
+  console.log("   👥 Approvers after revoke:", approvers.length);
 
-  console.log("\n7️⃣  ADD NEW OWNER (Multi-sig Process)");
-  const newOwner = ethers.Wallet.createRandom();
-  const addOwnerData = wallet.interface.encodeFunctionData("addOwner", [newOwner.address]);
-  
-  await wallet.connect(owner1).newTransaction(wallet.address, 0, addOwnerData);
-  console.log("   ✅ Submitted transaction to add new owner");
-  
-  await wallet.connect(owner1).approveTransaction(2);
-  await wallet.connect(owner2).approveTransaction(2);
-  console.log("   ✅ Approved by 2 owners");
-  
-  await wallet.connect(owner1).executeTransaction(2);
-  console.log("   ✅ New owner added!");
-  
-  const finalOwners = await wallet.getOwners();
-  console.log("   📊 Total owners now:", finalOwners.length);
-
-  console.log("\n8️⃣  DEMONSTRATE DEPOSIT EVENT");
+  console.log("\n🔟  DEMONSTRATE DEPOSIT EVENT");
   const depositAmount = ethers.utils.parseEther("2");
   const depositTx = await owner2.sendTransaction({
     to: wallet.address,
     value: depositAmount
   });
-  const receipt = await depositTx.wait();
+  const depositReceipt = await depositTx.wait();
   
-  // Check for Deposit event
-  const depositEvent = receipt.events?.find(e => e.event === "Deposit");
+  const depositEvent = depositReceipt.events?.find(e => e.event === "Deposit");
   if (depositEvent) {
-    console.log("   ✅ Deposit received from:", depositEvent.args.sender);
+    console.log("   ✅ Deposit received from:", depositEvent.args.sender === owner2.address ? "Owner 2" : "Unknown");
     console.log("   📊 Amount:", ethers.utils.formatEther(depositEvent.args.amount), "ETH");
-  } else {
-    // Fallback if event not captured (can happen in local testing)
-    console.log("   ✅ Deposit of", ethers.utils.formatEther(depositAmount), "ETH received");
-    const newBalance = await wallet.getBalance();
-    console.log("   📊 New wallet balance:", ethers.utils.formatEther(newBalance), "ETH");
   }
+  
+  const newBalance = await wallet.getBalance();
+  console.log("   📊 New wallet balance:", ethers.utils.formatEther(newBalance), "ETH");
 
   console.log("\n✅ DEMO COMPLETE!");
   console.log("\n📊 SUMMARY:");
   console.log("   • Deployed multi-sig wallet with 3 owners");
   console.log("   • Required 2 approvals for transactions");
+  console.log("   • Proposer automatically approves");
+  console.log("   • Proposer can delete if alone");
   console.log("   • Submitted, approved, and executed transaction");
   console.log("   • Demonstrated approval revocation");
-  console.log("   • Added new owner through multi-sig process");
   console.log("   • Showed deposit event emission");
-  console.log("   • All functions and events working correctly!\n");
+  console.log("   • All features working correctly!\n");
 }
 
 main()
