@@ -226,11 +226,14 @@ contract SharpWallet is ISharpWallet {
                 to: to,
                 value: value,
                 executed: false,
-                numConfirmations: 0,
+                numConfirmations: 1,
                 data: data
             })
         );
 
+        approved[txId][msg.sender] = true;
+
+        emit TransactionApproved(txId, msg.sender); // NEW: Emit approval event for proposer
         emit TransactionSubmitted(txId, msg.sender, to, value, data);
     }
 
