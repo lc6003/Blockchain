@@ -81,11 +81,13 @@ async function main() {
   
   // Get event from receipt
   const submitEvent = receipt1.events?.find(e => e.event === "TransactionSubmitted");
-  console.log("✅ Transaction Submitted!");
-  console.log("  Transaction ID:", submitEvent.args.txId.toString());
-  console.log("  Proposer:", submitEvent.args.proposer);
-  console.log("  To:", submitEvent.args.to);
-  console.log("  Value:", ethers.utils.formatEther(submitEvent.args.value), "ETH");
+  if (submitEvent) {
+    console.log("✅ Transaction Submitted!");
+    console.log("  Transaction ID:", submitEvent.args.txId.toString());
+    console.log("  Proposer:", submitEvent.args.proposer);
+    console.log("  To:", submitEvent.args.to);
+    console.log("  Value:", ethers.utils.formatEther(submitEvent.args.value), "ETH");
+  }
   console.log();
 
   // Demo 4: Get Transaction Details
@@ -116,9 +118,11 @@ async function main() {
   const receipt2 = await tx2.wait();
   
   const approveEvent = receipt2.events?.find(e => e.event === "TransactionApproved");
-  console.log("✅ Transaction Approved by Owner 1!");
-  console.log("  Transaction ID:", approveEvent.args.txId.toString());
-  console.log("  Owner:", approveEvent.args.owner);
+  if (approveEvent) {
+    console.log("✅ Transaction Approved by Owner 1!");
+    console.log("  Transaction ID:", approveEvent.args.txId.toString());
+    console.log("  Owner:", approveEvent.args.owner);
+  }
   
   const approvalCount1 = await wallet.approvalCount(txId);
   console.log("  Current Approvals:", approvalCount1.toString());
@@ -131,9 +135,11 @@ async function main() {
   const receipt3 = await tx3.wait();
   
   const approveEvent2 = receipt3.events?.find(e => e.event === "TransactionApproved");
-  console.log("✅ Transaction Approved by Owner 2!");
-  console.log("  Transaction ID:", approveEvent2.args.txId.toString());
-  console.log("  Owner:", approveEvent2.args.owner);
+  if (approveEvent2) {
+    console.log("✅ Transaction Approved by Owner 2!");
+    console.log("  Transaction ID:", approveEvent2.args.txId.toString());
+    console.log("  Owner:", approveEvent2.args.owner);
+  }
   
   const approvalCount2 = await wallet.approvalCount(txId);
   console.log("  Current Approvals:", approvalCount2.toString());
@@ -160,9 +166,11 @@ async function main() {
   const receipt4 = await tx4.wait();
   
   const executeEvent = receipt4.events?.find(e => e.event === "TransactionExecuted");
-  console.log("✅ Transaction Executed!");
-  console.log("  Transaction ID:", executeEvent.args.txId.toString());
-  console.log("  Executor:", executeEvent.args.executor);
+  if (executeEvent) {
+    console.log("✅ Transaction Executed!");
+    console.log("  Transaction ID:", executeEvent.args.txId.toString());
+    console.log("  Executor:", executeEvent.args.executor);
+  }
   
   const recipientBalanceAfter = await ethers.provider.getBalance(recipient.address);
   console.log("Recipient Balance After:", ethers.utils.formatEther(recipientBalanceAfter), "ETH");
@@ -209,9 +217,11 @@ async function main() {
   const receipt6 = await tx6.wait();
   
   const revokeEvent = receipt6.events?.find(e => e.event === "ApprovalRevoked");
-  console.log("✅ Approval Revoked!");
-  console.log("  Transaction ID:", revokeEvent.args.txId.toString());
-  console.log("  Owner:", revokeEvent.args.owner);
+  if (revokeEvent) {
+    console.log("✅ Approval Revoked!");
+    console.log("  Transaction ID:", revokeEvent.args.txId.toString());
+    console.log("  Owner:", revokeEvent.args.owner);
+  }
   
   approvals = await wallet.approvalCount(1);
   console.log("Approvals after revoke:", approvals.toString());
@@ -223,8 +233,11 @@ async function main() {
   const newOwner = ethers.Wallet.createRandom();
   console.log("New Owner Address:", newOwner.address);
   
-  // Encode the addOwner function call
-  const addOwnerData = wallet.interface.encodeFunctionData("addOwner", [newOwner.address]);
+  // Encode the addOwner function call - FIXED for Ethers v5
+  const iface = new ethers.utils.Interface([
+    "function addOwner(address newOwner)"
+  ]);
+  const addOwnerData = iface.encodeFunctionData("addOwner", [newOwner.address]);
   
   console.log("Step 1: Submit transaction to add owner...");
   const tx7 = await wallet.connect(owner1).newTransaction(
@@ -248,8 +261,10 @@ async function main() {
   const receipt8 = await tx8.wait();
   
   const ownerAddedEvent = receipt8.events?.find(e => e.event === "OwnerAdded");
-  console.log("✅ New Owner Added!");
-  console.log("  New Owner:", ownerAddedEvent.args.newOwner);
+  if (ownerAddedEvent) {
+    console.log("✅ New Owner Added!");
+    console.log("  New Owner:", ownerAddedEvent.args.newOwner);
+  }
   
   const updatedOwners = await wallet.getOwners();
   console.log("Current Owners Count:", updatedOwners.length);
@@ -261,7 +276,11 @@ async function main() {
   const newRequirement = 3;
   console.log("New Requirement:", newRequirement);
   
-  const updateReqData = wallet.interface.encodeFunctionData("updateRequirement", [newRequirement]);
+  // FIXED for Ethers v5
+  const iface2 = new ethers.utils.Interface([
+    "function updateRequirement(uint256 newRequirement)"
+  ]);
+  const updateReqData = iface2.encodeFunctionData("updateRequirement", [newRequirement]);
   
   console.log("Step 1: Submit transaction...");
   await wallet.connect(owner1).newTransaction(wallet.address, 0, updateReqData);
@@ -277,8 +296,10 @@ async function main() {
   const receipt9 = await tx9.wait();
   
   const reqChangedEvent = receipt9.events?.find(e => e.event === "RequirementChanged");
-  console.log("✅ Requirement Updated!");
-  console.log("  New Requirement:", reqChangedEvent.args.newRequirement.toString());
+  if (reqChangedEvent) {
+    console.log("✅ Requirement Updated!");
+    console.log("  New Requirement:", reqChangedEvent.args.newRequirement.toString());
+  }
   
   const finalRequirement = await wallet.requiredApprovals();
   console.log("Current Requirement:", finalRequirement.toString());
