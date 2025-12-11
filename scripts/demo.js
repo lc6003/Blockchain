@@ -285,6 +285,7 @@ async function main() {
   }
   
   balance = await wallet.getBalance();
+  console.log("  Amount Deposited:", ethers.utils.formatEther(depositAmount), "ETH");
   console.log("  New wallet balance:", ethers.utils.formatEther(balance), "ETH");
   console.log();
 

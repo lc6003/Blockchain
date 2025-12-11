@@ -135,7 +135,8 @@ async function main() {
     console.log("   ✅ Deposit received from:", depositEvent.args.sender === owner2.address ? "Owner 2" : "Unknown");
     console.log("   📊 Amount:", ethers.utils.formatEther(depositEvent.args.amount), "ETH");
   }
-  
+
+  console.log("   Amount Deposited:", ethers.utils.formatEther(depositAmount), "ETH");
   const newBalance = await wallet.getBalance();
   console.log("   📊 New wallet balance:", ethers.utils.formatEther(newBalance), "ETH");
 
