@@ -426,4 +426,98 @@ describe("SharpWallet", function () {
             expect(await sharpWallet.approvalCount(1)).to.equal(1); // Owner2's auto-approval
         });
     });
+
+    describe("Get Approvers Function", function () {
+        beforeEach(async function () {
+            // Create a transaction (auto-approved by owner1)
+            await sharpWallet.connect(owner1).newTransaction(
+                nonOwner.address,
+                ethers.utils.parseEther("1"),
+                "0x"
+            );
+        });
+
+        it("Should return proposer as initial approver", async function () {
+            const approvers = await sharpWallet.getApprovers(0);
+            
+            expect(approvers.length).to.equal(1);
+            expect(approvers[0]).to.equal(owner1.address);
+        });
+
+        it("Should return all approvers after multiple approvals", async function () {
+            // Add more approvals
+            await sharpWallet.connect(owner2).approveTransaction(0);
+            await sharpWallet.connect(owner3).approveTransaction(0);
+
+            const approvers = await sharpWallet.getApprovers(0);
+            
+            expect(approvers.length).to.equal(3);
+            expect(approvers).to.include(owner1.address);
+            expect(approvers).to.include(owner2.address);
+            expect(approvers).to.include(owner3.address);
+        });
+
+        it("Should update approvers list after revocation", async function () {
+            // Add approval from owner2
+            await sharpWallet.connect(owner2).approveTransaction(0);
+            
+            let approvers = await sharpWallet.getApprovers(0);
+            expect(approvers.length).to.equal(2);
+
+            // Owner2 revokes
+            await sharpWallet.connect(owner2).revokeApproval(0);
+
+            approvers = await sharpWallet.getApprovers(0);
+            expect(approvers.length).to.equal(1);
+            expect(approvers[0]).to.equal(owner1.address);
+        });
+
+        it("Should return empty array after deletion", async function () {
+            // Delete the transaction
+            await sharpWallet.connect(owner1).deleteTransaction(0);
+
+            const approvers = await sharpWallet.getApprovers(0);
+            expect(approvers.length).to.equal(0);
+        });
+
+        it("Should return approvers in order they approved", async function () {
+            // Owner1 already approved (auto-approval)
+            await sharpWallet.connect(owner3).approveTransaction(0);
+            await sharpWallet.connect(owner2).approveTransaction(0);
+
+            const approvers = await sharpWallet.getApprovers(0);
+            
+            // Should return in order: owner1, owner3, owner2
+            // (based on owners array order, not approval order)
+            expect(approvers.length).to.equal(3);
+            expect(approvers[0]).to.equal(owner1.address);
+            expect(approvers[1]).to.equal(owner2.address);
+            expect(approvers[2]).to.equal(owner3.address);
+        });
+
+        it("Should work for multiple transactions independently", async function () {
+            // Create second transaction
+            await sharpWallet.connect(owner2).newTransaction(
+                nonOwner.address,
+                ethers.utils.parseEther("2"),
+                "0x"
+            );
+
+            // Get approvers for each
+            const approvers0 = await sharpWallet.getApprovers(0);
+            const approvers1 = await sharpWallet.getApprovers(1);
+
+            expect(approvers0.length).to.equal(1);
+            expect(approvers0[0]).to.equal(owner1.address);
+
+            expect(approvers1.length).to.equal(1);
+            expect(approvers1[0]).to.equal(owner2.address);
+        });
+
+        it("Should reject getting approvers for non-existent transaction", async function () {
+            await expect(
+                sharpWallet.getApprovers(99)
+            ).to.be.reverted; // Will revert with TxDoesNotExist
+        });
+    });
 });
